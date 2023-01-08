@@ -16,6 +16,11 @@ jobs:
     steps:
       - name: Checkout the repository
         uses: actions/checkout@v3
+      - name: Generate tags
+        id: tags
+        run: |
+          tags=("latest" "$(date +'%F')")
+          echo "tags=${tags[*]}" >> $GITHUB_OUTPUT
       - name: Build the image
         id: build
         uses: redhat-actions/buildah-build@v2
@@ -23,6 +28,7 @@ jobs:
           containerfiles: |
             Containerfile
           image: ${{ env.IMAGE_NAME }}
+          tags: ${{ steps.tags.outputs.tags }}
           layers: true
           oci: true
       - name: Push to GHCR
