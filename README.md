@@ -19,4 +19,4 @@ To switch to booting from this container image, run
 rpm-ostree rebase ostree-unverified-registry:ghcr.io/paveloom-d/paveloom-os:latest
 ```
 
-The image is updated daily. You can use dates as [tags](https://github.com/paveloom-d/paveloom-os/pkgs/container/paveloom-os), too.
+The image is updated daily. You can use dates and short refs as [tags](https://github.com/paveloom-d/paveloom-os/pkgs/container/paveloom-os), too.

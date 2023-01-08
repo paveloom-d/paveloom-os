@@ -19,7 +19,7 @@ jobs:
       - name: Generate tags
         id: tags
         run: |
-          tags=("latest" "$(date +'%F')")
+          tags=("latest" "$(date +'%F') "$(git rev-parse --short HEAD)"")
           echo "tags=${tags[*]}" >> $GITHUB_OUTPUT
       - name: Build the image
         id: build
