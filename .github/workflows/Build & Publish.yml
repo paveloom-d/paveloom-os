@@ -1,0 +1,67 @@
+name: Build & Publish
+on:
+  schedule:
+    - cron: 0 7 * * *
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+env:
+  IMAGE_NAME: paveloom-os
+  IMAGE_REGISTRY: ghcr.io/${{ github.repository_owner }}
+jobs:
+  build:
+    name: Build & Publish
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v3
+      - name: Build the image
+        id: build
+        uses: redhat-actions/buildah-build@v2
+        with:
+          containerfiles: |
+            Containerfile
+          image: ${{ env.IMAGE_NAME }}
+          layers: true
+          oci: true
+      - name: Push to GHCR
+        uses: redhat-actions/push-to-registry@v2
+        id: push
+        with:
+          image: ${{ steps.build.outputs.image }}
+          tags: ${{ steps.build.outputs.tags }}
+          registry: ${{ env.IMAGE_REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+          extra-args: |
+            --disable-content-trust
+      - name: Install `cosign`
+        uses: sigstore/cosign-installer@main
+      - name: Write `cosign` keys to disk
+        run: |
+          echo "${{ secrets.COSIGN_PRIVATE_KEY }}" > cosign.key
+          echo "${{ secrets.COSIGN_PUBLIC_KEY }}" > cosign.pub
+      - name: Login to GHCR
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+      - name: Sign container image
+        run: |
+          cosign sign \
+            --key cosign.key \
+            -a git_sha=${{ github.sha }} \
+            -a git_tag=${{ github.ref }} \
+            "${{ steps.push.outputs.registry-path }}@${{ steps.push.outputs.digest }}"
+        env:
+          COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
+      - name: Verify signed image
+        run: |
+          cosign verify \
+            --key cosign.pub \
+            "${{ steps.push.outputs.registry-path}}@${{ steps.push.outputs.digest }}"
+      - name: Echo push outputs
+        run: |
+          echo "${{ toJSON(steps.push.outputs) }}"
