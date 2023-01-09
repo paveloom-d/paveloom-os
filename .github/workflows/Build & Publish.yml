@@ -10,13 +10,35 @@ jobs:
   build:
     name: Build & Publish
     runs-on: ubuntu-latest
+    container:
+      image: fedora:latest
+      options: --privileged
     steps:
+      - name: Restore DNF's cache
+        uses: actions/cache@v2
+        with:
+          key: dnf-cache
+          path: |
+            /dnf-cache
+      - name: Install packages
+        run: |
+          echo "keepcache=1" | sudo tee -a /etc/dnf/dnf.conf >/dev/null
+          echo "cachedir=/dnf-cache" | sudo tee -a /etc/dnf/dnf.conf >/dev/null
+          dnf -y update
+          dnf -y install \
+            buildah \
+            docker \
+            git \
+            podman
       - name: Checkout the repository
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 1
       - name: Generate tags
         id: tags
         run: |
-          tags=("latest" "$(date +'%F') "$(git rev-parse --short HEAD)"")
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          tags=("latest" "$(date +'%F') "$(git rev-parse --short "$GITHUB_SHA")"")
           echo "tags=${tags[*]}" >> $GITHUB_OUTPUT
       - name: Build the image
         id: build
@@ -26,8 +48,9 @@ jobs:
             Containerfile
           image: ${{ github.event.repository.name }}
           tags: ${{ steps.tags.outputs.tags }}
-          layers: true
           oci: true
+          extra-args: |
+            -v /dnf-cache:/dnf-cache:Z
       - name: Push to GHCR
         uses: redhat-actions/push-to-registry@v2
         id: push-ghcr
