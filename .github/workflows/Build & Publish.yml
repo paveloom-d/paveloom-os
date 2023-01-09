@@ -49,6 +49,7 @@ jobs:
           image: ${{ github.event.repository.name }}
           tags: ${{ steps.tags.outputs.tags }}
           oci: true
+          layers: true
           extra-args: |
             -v /dnf-cache:/dnf-cache:Z
       - name: Push to Docker Hub

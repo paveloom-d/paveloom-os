@@ -16,8 +16,12 @@ Repository:
 To build the image locally, run
 
 ```bash
-mkdir dnf-cache
-podman build -v $(pwd)/dnf-cache:/dnf-cache:Z -t paveloom-os .
+mkdir -p cache/dnf cache/rpm-ostree
+podman build \
+  -v $(pwd)/cache/dnf:/cache/dnf:Z \
+  -v $(pwd)/cache/rpm-ostree:/var/cache/rpm-ostree:Z \
+  --build-arg SAVE_RPM_OSTREE_CACHE=true \
+  -t paveloom-os .
 ```
 
 To delete dangling images (in case a build is unsuccessful), run
@@ -55,4 +59,4 @@ To switch to booting from this container image (hosted on [Docker Hub](https://h
 sudo rpm-ostree rebase --experimental ostree-unverified-registry:docker.io/paveloom/paveloom-os:latest
 ```
 
-The image is updated daily. You can use dates and short SHAs as [tags](https://github.com/paveloom-d/paveloom-os/pkgs/container/paveloom-os), too.
+The image is updated daily. You can use dates and short SHAs as [tags](https://hub.docker.com/r/paveloom/paveloom-os/tags), too.
