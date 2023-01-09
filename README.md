@@ -49,16 +49,10 @@ podman rmi paveloom-os
 
 #### Rebase
 
-To switch to booting from this container image, run
-
-```bash
-sudo rpm-ostree rebase --experimental ostree-unverified-registry:ghcr.io/paveloom-d/paveloom-os:latest
-```
-
-*or*
+To switch to booting from this container image (hosted on [Docker Hub](https://hub.docker.com/r/paveloom/paveloom-os)), run
 
 ```bash
 sudo rpm-ostree rebase --experimental ostree-unverified-registry:docker.io/paveloom/paveloom-os:latest
 ```
 
-The image is updated daily. You can use dates and short refs as [tags](https://github.com/paveloom-d/paveloom-os/pkgs/container/paveloom-os), too.
+The image is updated daily. You can use dates and short SHAs as [tags](https://github.com/paveloom-d/paveloom-os/pkgs/container/paveloom-os), too.

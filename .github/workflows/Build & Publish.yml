@@ -1,7 +1,7 @@
 name: Build & Publish
 on:
   schedule:
-    - cron: 0 7 * * *
+    - cron: 0 4 * * *
   push:
     branches:
       - main
@@ -51,18 +51,9 @@ jobs:
           oci: true
           extra-args: |
             -v /dnf-cache:/dnf-cache:Z
-      - name: Push to GHCR
-        uses: redhat-actions/push-to-registry@v2
-        id: push-ghcr
-        with:
-          image: ${{ steps.build.outputs.image }}
-          tags: ${{ steps.build.outputs.tags }}
-          registry: ghcr.io/${{ github.repository_owner }}
-          username: ${{ github.actor }}
-          password: ${{ github.token }}
       - name: Push to Docker Hub
         uses: redhat-actions/push-to-registry@v2
-        id: push-dockerhub
+        id: push
         with:
           image: ${{ steps.build.outputs.image }}
           tags: ${{ steps.build.outputs.tags }}
@@ -74,12 +65,6 @@ jobs:
       - name: Write the `cosign` private key to the disk
         run: |
           echo "${{ secrets.COSIGN_PRIVATE_KEY }}" > cosign.key
-      - name: Login to GHCR
-        uses: docker/login-action@v2
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ github.token }}
       - name: Login to Docker Hub
         uses: docker/login-action@v2
         with:
@@ -91,23 +76,14 @@ jobs:
             --key cosign.key \
             -a git_sha=${{ github.sha }} \
             -a git_tag=${{ github.ref }} \
-            "${{ steps.push-ghcr.outputs.registry-path }}@${{ steps.push-ghcr.outputs.digest }}"
-          cosign sign \
-            --key cosign.key \
-            -a git_sha=${{ github.sha }} \
-            -a git_tag=${{ github.ref }} \
-            "${{ steps.push-dockerhub.outputs.registry-path }}@${{ steps.push-dockerhub.outputs.digest }}"
+            "${{ steps.push.outputs.registry-path }}@${{ steps.push.outputs.digest }}"
         env:
           COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
       - name: Verify signed images
         run: |
           cosign verify \
             --key cosign.pub \
-            "${{ steps.push-ghcr.outputs.registry-path}}@${{ steps.push-ghcr.outputs.digest }}"
-          cosign verify \
-            --key cosign.pub \
-            "${{ steps.push-dockerhub.outputs.registry-path}}@${{ steps.push-dockerhub.outputs.digest }}"
+            "${{ steps.push.outputs.registry-path}}@${{ steps.push.outputs.digest }}"
       - name: Echo push outputs
         run: |
-          echo "${{ toJSON(steps.push-ghcr.outputs) }}"
-          echo "${{ toJSON(steps.push-dockerhub.outputs) }}"
+          echo "${{ toJSON(steps.push.outputs) }}"
