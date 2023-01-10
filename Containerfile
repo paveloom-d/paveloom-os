@@ -6,6 +6,8 @@ ARG SAVE_RPM_OSTREE_CACHE=false
 FROM docker.io/fedora:${FEDORA_MAJOR_VERSION} AS builder
 
 RUN set -e; \
+  curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | \
+    sh -s -- -y --default-toolchain none --no-modify-path; \
   echo "keepcache=1" | sudo tee -a /etc/dnf/dnf.conf >/dev/null; \
   echo "cachedir=/cache/dnf" | sudo tee -a /etc/dnf/dnf.conf >/dev/null; \
   dnf -y update; \
@@ -16,8 +18,7 @@ RUN set -e; \
   git \
   jq \
   meson \
-  ninja-build \
-  wget
+  ninja-build
 
 # Build the `pixman-1` library
 FROM builder AS pixman
@@ -26,7 +27,7 @@ WORKDIR /source
 
 RUN set -e; \
   VERSION=0.42.2; \
-  wget https://github.com/freedesktop/pixman/archive/refs/tags/pixman-"${VERSION}".tar.gz -O source.tar.gz; \
+  curl https://github.com/freedesktop/pixman/archive/refs/tags/pixman-"${VERSION}".tar.gz -Lo source.tar.gz; \
   tar --strip-components=1 -xf source.tar.gz
 RUN set -e; \
   meson --prefix=/usr --buildtype=release build; \
@@ -88,12 +89,44 @@ RUN set -e; \
   ninja -C build test; \
   DESTDIR=/build ninja -C build install
 
+# Build the `eww` binary
+FROM builder AS eww
+
+WORKDIR /source
+ENV PATH "$HOME/.cargo/bin:$PATH"
+
+RUN set -e; \
+  VERSION=0.4.0; \
+  curl https://github.com/elkowar/eww/archive/refs/tags/v"${VERSION}".tar.gz -Lo source.tar.gz; \
+  tar --strip-components=1 -xf source.tar.gz
+RUN set -e; \
+  source "$HOME/.cargo/env"; \
+  cargo fetch
+RUN set -e; \
+  dnf -y install \
+    gtk-layer-shell-devel \
+    gtk3-devel;
+RUN set -e; \
+  source "$HOME/.cargo/env"; \
+  cargo build --release --no-default-features --features=wayland; \
+  chmod +x target/release/eww; \
+  mkdir -p /build/usr/bin; \
+  cp target/release/eww /build/usr/bin
+
 # Build the final image
 FROM ghcr.io/cgwalters/fedora-silverblue:${FEDORA_MAJOR_VERSION}
 COPY --from=hyprland /build/usr/ /usr/
+COPY --from=eww /build/usr/ /usr/
 RUN set -e; \
-  rpm-ostree install libseat; \
+  rpm-ostree install \
+    dunst \
+    gtk-layer-shell \
+    keychain \
+    libseat \
+    playerctl \
+    wofi; \
   if [ "$SAVE_RPM_OSTREE_CACHE" = "false" ]; then \
+    echo "Cleaning the cache..."; \
     rpm-ostree cleanup -m; \
     ostree container commit; \
   fi
