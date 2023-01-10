@@ -89,6 +89,33 @@ RUN set -e; \
   ninja -C build test; \
   DESTDIR=/build ninja -C build install
 
+# Build the `xdg-desktop-portal-hyprland` library
+FROM builder AS xdg-desktop-portal-hyprland
+
+WORKDIR /source
+
+RUN set -e; \
+  git clone --recursive https://github.com/hyprwm/xdg-desktop-portal-hyprland .
+RUN set -e; \
+  dnf -y install \
+    inih-devel \
+    libdrm-devel \
+    libxkbcommon-devel \
+    mesa-libgbm-devel \
+    pipewire-devel \
+    qt6-qtwayland-devel \
+    systemd-devel \
+    wayland-devel \
+    wayland-protocols-devel
+RUN set -e; \
+  meson --prefix=/usr --buildtype=release build; \
+  ninja -C build; \
+  ninja -C build test; \
+  cd hyprland-share-picker && make all && cd ..;\
+  DESTDIR=/build ninja -C build install; \
+  mkdir -p /build/usr/bin; \
+  cp hyprland-share-picker/build/hyprland-share-picker /build/usr/bin/
+
 # Build the `eww` binary
 FROM builder AS eww
 
@@ -117,6 +144,7 @@ RUN set -e; \
 FROM ghcr.io/cgwalters/fedora-silverblue:${FEDORA_MAJOR_VERSION}
 COPY --from=hyprland /build/usr/ /usr/
 COPY --from=eww /build/usr/ /usr/
+COPY --from=xdg-desktop-portal-hyprland /build/usr/ /usr/
 RUN set -e; \
   rpm-ostree install \
     dunst \
@@ -124,6 +152,8 @@ RUN set -e; \
     keychain \
     libseat \
     playerctl \
+    qt6-qtwayland \
+    slurp \
     wofi; \
   if [ "$SAVE_RPM_OSTREE_CACHE" = "false" ]; then \
     echo "Cleaning the cache..."; \
