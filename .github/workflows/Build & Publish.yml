@@ -60,39 +60,39 @@ jobs:
           layers: true
           extra-args: |
             -v /dnf-cache:/dnf-cache:Z
-    # - name: Push to Docker Hub
-    #   uses: redhat-actions/push-to-registry@v2
-    #   id: push
-    #   with:
-    #     image: ${{ steps.build.outputs.image }}
-    #     tags: ${{ steps.build.outputs.tags }}
-    #     registry: docker.io/${{ github.actor }}
-    #     username: ${{ github.actor }}
-    #     password: ${{ secrets.DOCKERHUB_TOKEN }}
-    # - name: Install `cosign`
-    #   uses: sigstore/cosign-installer@main
-    # - name: Write the `cosign` private key to the disk
-    #   run: |
-    #     echo "${{ secrets.COSIGN_PRIVATE_KEY }}" > cosign.key
-    # - name: Login to Docker Hub
-    #   uses: docker/login-action@v2
-    #   with:
-    #     username: ${{ github.actor }}
-    #     password: ${{ secrets.DOCKERHUB_TOKEN }}
-    # - name: Sign container images
-    #   run: |
-    #     cosign sign \
-    #       --key cosign.key \
-    #       -a git_sha=${{ github.sha }} \
-    #       -a git_tag=${{ github.ref }} \
-    #       "${{ steps.push.outputs.registry-path }}@${{ steps.push.outputs.digest }}"
-    #   env:
-    #     COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
-    # - name: Verify signed images
-    #   run: |
-    #     cosign verify \
-    #       --key cosign.pub \
-    #       "${{ steps.push.outputs.registry-path}}@${{ steps.push.outputs.digest }}"
-    # - name: Echo push outputs
-    #   run: |
-    #     echo "${{ toJSON(steps.push.outputs) }}"
+      - name: Push to Docker Hub
+        uses: redhat-actions/push-to-registry@v2
+        id: push
+        with:
+          image: ${{ steps.build.outputs.image }}
+          tags: ${{ steps.build.outputs.tags }}
+          registry: docker.io/${{ github.actor }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Install `cosign`
+        uses: sigstore/cosign-installer@main
+      - name: Write the `cosign` private key to the disk
+        run: |
+          echo "${{ secrets.COSIGN_PRIVATE_KEY }}" > cosign.key
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ github.actor }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Sign container images
+        run: |
+          cosign sign \
+            --key cosign.key \
+            -a git_sha=${{ github.sha }} \
+            -a git_tag=${{ github.ref }} \
+            "${{ steps.push.outputs.registry-path }}@${{ steps.push.outputs.digest }}"
+        env:
+          COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
+      - name: Verify signed images
+        run: |
+          cosign verify \
+            --key cosign.pub \
+            "${{ steps.push.outputs.registry-path}}@${{ steps.push.outputs.digest }}"
+      - name: Echo push outputs
+        run: |
+          echo "${{ toJSON(steps.push.outputs) }}"
