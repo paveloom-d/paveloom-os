@@ -20,7 +20,7 @@ RUN set -e; \
   meson \
   ninja-build
 
-# Build the `pixman-1` library
+# Build `pixman-1`
 FROM builder AS pixman
 
 WORKDIR /source
@@ -35,7 +35,7 @@ RUN set -e; \
   ninja -C build test; \
   DESTDIR=/build ninja -C build install
 
-# Build the `libxcb-errors` library
+# Build `libxcb-errors`
 FROM builder AS xcb-errors
 
 WORKDIR /source
@@ -51,10 +51,10 @@ RUN set -e; \
   ./autogen.sh --prefix=/usr; \
   DESTDIR=/build make install
 
-# Build the `hyprland` binary
+# Build Hyprland and everything related
 FROM builder AS hyprland
 
-WORKDIR /source
+WORKDIR /hyprland
 
 RUN set -e; \
   git clone --recursive https://github.com/hyprwm/Hyprland .
@@ -62,15 +62,19 @@ RUN set -e; \
   dnf -y install \
     cairo-devel \
     glslang-devel \
+    inih-devel \
     libX11-devel \
     libdrm-devel \
     libinput-devel \
+    libjpeg-turbo-devel \
     libseat-devel \
     libxcb-devel \
     libxkbcommon-devel \
     mesa-libEGL-devel \
     mesa-libgbm-devel \
     pango-devel \
+    pipewire-devel \
+    qt6-qtwayland-devel \
     systemd-devel \
     vulkan-headers \
     vulkan-loader-devel \
@@ -81,31 +85,16 @@ RUN set -e; \
     xorg-x11-server-Xwayland-devel
 COPY --from=pixman /build/usr/ /usr/
 COPY --from=xcb-errors /build/usr/ /usr/
-COPY --from=xcb-errors /build/usr/ /build/usr/
 RUN set -e; \
   meson --prefix=/usr --buildtype=release build; \
   ninja -C build; \
   ninja -C build test; \
   DESTDIR=/build ninja -C build install
 
-# Build the `xdg-desktop-portal-hyprland` library
-FROM builder AS xdg-desktop-portal-hyprland
-
-WORKDIR /source
+WORKDIR /xdg-desktop-portal-hyprland
 
 RUN set -e; \
   git clone --recursive https://github.com/hyprwm/xdg-desktop-portal-hyprland .
-RUN set -e; \
-  dnf -y install \
-    inih-devel \
-    libdrm-devel \
-    libxkbcommon-devel \
-    mesa-libgbm-devel \
-    pipewire-devel \
-    qt6-qtwayland-devel \
-    systemd-devel \
-    wayland-devel \
-    wayland-protocols-devel
 RUN set -e; \
   meson --prefix=/usr --buildtype=release build; \
   ninja -C build; \
@@ -115,10 +104,19 @@ RUN set -e; \
   mkdir -p /build/usr/bin; \
   cp hyprland-share-picker/build/hyprland-share-picker /build/usr/bin/
 
+WORKDIR /hyprpaper
+
+RUN set -e; \
+  git clone https://github.com/hyprwm/hyprpaper .
+RUN set -e; \
+  make all; \
+  cp build/hyprpaper /build/usr/bin/
+
 # Build the `eww` binary
 FROM builder AS eww
 
 WORKDIR /source
+
 ENV PATH "$HOME/.cargo/bin:$PATH"
 
 RUN set -e; \
@@ -145,9 +143,9 @@ FROM ghcr.io/cgwalters/fedora-silverblue:${FEDORA_MAJOR_VERSION}
 # Define whether to save the `rpm-ostree`'s cache
 ARG SAVE_RPM_OSTREE_CACHE=false
 
+COPY --from=xcb-errors /build/usr/ /usr/
 COPY --from=hyprland /build/usr/ /usr/
 COPY --from=eww /build/usr/ /usr/
-COPY --from=xdg-desktop-portal-hyprland /build/usr/ /usr/
 
 RUN set -e; \
   rpm-ostree install \
