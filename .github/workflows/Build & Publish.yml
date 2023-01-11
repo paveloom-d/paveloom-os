@@ -6,25 +6,24 @@ on:
     branches:
       - main
   workflow_dispatch:
+defaults:
+  run:
+    shell: bash
 jobs:
   build:
     name: Build & Publish
     runs-on: ubuntu-latest
     steps:
-      - name: Make sure cache paths exist
-        run: sudo mkdir -p /dnf-cache
+      - name: Prepare cache paths
+        run: |
+          sudo mkdir -p /dnf-cache
+          sudo chown -R $(whoami) /dnf-cache
       - name: Restore DNF's cache
         uses: actions/cache@v2
         with:
           key: dnf-cache
           path: |
             /dnf-cache
-      - name: Restore Buildah's cache
-        uses: actions/cache@v2
-        with:
-          key: buildah-cache
-          path: |
-            /var/lib/containers
       - name: Checkout the repository
         uses: actions/checkout@v3
         with:
