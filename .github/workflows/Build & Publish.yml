@@ -16,14 +16,13 @@ jobs:
     steps:
       - name: Prepare cache paths
         run: |
-          sudo mkdir -p /dnf-cache
-          sudo chown -R $(whoami) /dnf-cache
+          mkdir -p ~/cache/dnf
       - name: Restore DNF's cache
         uses: actions/cache@v2
         with:
           key: dnf-cache
           path: |
-            /dnf-cache
+            ~/cache/dnf
       - name: Checkout the repository
         uses: actions/checkout@v3
         with:
@@ -45,7 +44,7 @@ jobs:
           oci: true
           layers: true
           extra-args: |
-            -v /dnf-cache:/dnf-cache:Z
+            -v /home/runner/cache/dnf:/cache/dnf:Z
       - name: Push to Docker Hub
         uses: redhat-actions/push-to-registry@v2
         id: push
