@@ -146,11 +146,14 @@ COPY --from=hyprland /build/usr/ /usr/
 COPY --from=eww /build/usr/ /usr/
 COPY --from=xdg-desktop-portal-hyprland /build/usr/ /usr/
 RUN set -e; \
-  rpm-ostree update \
+  rpm-ostree install \
+    https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm \
+    https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm; \
+  rpm-ostree install \
+    rpmfusion-free-release \
+    rpmfusion-nonfree-release \
     --uninstall rpmfusion-free-release \
-    --uninstall rpmfusion-nonfree-release \
-    --install rpmfusion-free-release \
-    --install rpmfusion-nonfree-release; \
+    --uninstall rpmfusion-nonfree-release; \
   rpm-ostree override remove mesa-va-drivers --install mesa-va-drivers-freeworld; \
   rpm-ostree install \
     dunst \
