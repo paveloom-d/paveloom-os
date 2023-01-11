@@ -164,6 +164,7 @@ RUN set -e; \
     playerctl \
     qt6-qtwayland \
     slurp \
+    socat \
     wofi; \
   if [ "$SAVE_RPM_OSTREE_CACHE" == "false" ]; then \
     echo "Cleaning the cache..."; \
