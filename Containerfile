@@ -157,7 +157,6 @@ RUN set -e; \
   rpm-ostree install \
     dunst \
     gtk-layer-shell \
-    keychain \
     libseat \
     playerctl \
     qt6-qtwayland \
