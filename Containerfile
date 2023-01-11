@@ -57,8 +57,7 @@ FROM builder AS hyprland
 WORKDIR /source
 
 RUN set -e; \
-  VERSION=0.20.1beta; \
-  git clone --recursive -b v"${VERSION}" https://github.com/hyprwm/Hyprland .
+  git clone --recursive https://github.com/hyprwm/Hyprland .
 RUN set -e; \
   dnf -y install \
     cairo-devel \
