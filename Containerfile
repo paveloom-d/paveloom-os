@@ -1,6 +1,6 @@
-# Define the build arguments
+# Until the `latest` tag is available for the Silverblue image,
+# we would like to synchronize the major versions here
 ARG FEDORA_MAJOR_VERSION=37
-ARG SAVE_RPM_OSTREE_CACHE=false
 
 # Prepare an image with build tools
 FROM docker.io/fedora:${FEDORA_MAJOR_VERSION} AS builder
@@ -141,9 +141,14 @@ RUN set -e; \
 
 # Build the final image
 FROM ghcr.io/cgwalters/fedora-silverblue:${FEDORA_MAJOR_VERSION}
+
+# Define whether to save the `rpm-ostree`'s cache
+ARG SAVE_RPM_OSTREE_CACHE=false
+
 COPY --from=hyprland /build/usr/ /usr/
 COPY --from=eww /build/usr/ /usr/
 COPY --from=xdg-desktop-portal-hyprland /build/usr/ /usr/
+
 RUN set -e; \
   rpm-ostree install \
     https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm \
@@ -162,7 +167,7 @@ RUN set -e; \
     qt6-qtwayland \
     slurp \
     wofi; \
-  if [ "$SAVE_RPM_OSTREE_CACHE" = "false" ]; then \
+  if [ "$SAVE_RPM_OSTREE_CACHE" == "false" ]; then \
     echo "Cleaning the cache..."; \
     rpm-ostree cleanup -m; \
     ostree container commit; \
