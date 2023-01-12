@@ -136,6 +136,7 @@ RUN set -e; \
     gtk-layer-shell \
     libseat \
     playerctl \
+    polkit-gnome \
     qt6-qtwayland \
     slurp \
     socat \
