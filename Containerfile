@@ -133,6 +133,7 @@ RUN set -e; \
   rpm-ostree override remove mesa-va-drivers --install mesa-va-drivers-freeworld; \
   rpm-ostree install \
     dunst \
+    fontawesome5-fonts-all \
     gtk-layer-shell \
     libseat \
     playerctl \
