@@ -112,31 +112,6 @@ RUN set -e; \
   make all; \
   cp build/hyprpaper /build/usr/bin/
 
-# Build the `eww` binary
-FROM builder AS eww
-
-WORKDIR /source
-
-ENV PATH "$HOME/.cargo/bin:$PATH"
-
-RUN set -e; \
-  VERSION=0.4.0; \
-  curl https://github.com/elkowar/eww/archive/refs/tags/v"${VERSION}".tar.gz -Lo source.tar.gz; \
-  tar --strip-components=1 -xf source.tar.gz
-RUN set -e; \
-  source "$HOME/.cargo/env"; \
-  cargo fetch
-RUN set -e; \
-  dnf -y install \
-    gtk-layer-shell-devel \
-    gtk3-devel;
-RUN set -e; \
-  source "$HOME/.cargo/env"; \
-  cargo build --release --no-default-features --features=wayland; \
-  chmod +x target/release/eww; \
-  mkdir -p /build/usr/bin; \
-  cp target/release/eww /build/usr/bin
-
 # Build the final image
 FROM ghcr.io/cgwalters/fedora-silverblue:${FEDORA_MAJOR_VERSION}
 
@@ -145,7 +120,6 @@ ARG SAVE_RPM_OSTREE_CACHE=false
 
 COPY --from=xcb-errors /build/usr/ /usr/
 COPY --from=hyprland /build/usr/ /usr/
-COPY --from=eww /build/usr/ /usr/
 
 RUN set -e; \
   rpm-ostree install \
@@ -165,6 +139,7 @@ RUN set -e; \
     qt6-qtwayland \
     slurp \
     socat \
+    waybar \
     wofi; \
   if [ "$SAVE_RPM_OSTREE_CACHE" == "false" ]; then \
     echo "Cleaning the cache..."; \
