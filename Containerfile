@@ -17,6 +17,33 @@ RUN set -e; \
     --uninstall rpmfusion-free-release \
     --uninstall rpmfusion-nonfree-release; \
   rpm-ostree override remove mesa-va-drivers --install mesa-va-drivers-freeworld; \
+  sudo curl -o /etc/yum.repos.d/skype-stable.repo https://repo.skype.com/rpm/stable/skype-stable.repo; \
+  rpm-ostree install \
+    baobab \
+    distrobox \
+    espeak-ng-devel \
+    festival \
+    fish \
+    flatpak-builder \
+    gnome-console \
+    gnome-tweaks \
+    gparted \
+    gstreamer1-plugin-libav \
+    gstreamer1-plugins-bad-free-extras \
+    gstreamer1-plugins-bad-freeworld \
+    gstreamer1-plugins-ugly \
+    gstreamer1-vaapi \
+    libva-utils \
+    nautilus-gsconnect \
+    openssl \
+    python3-pip \
+    python3.9 \
+    quiterss \
+    radeontop \
+    samba \
+    skypeforlinux \
+    wireguard-tools \
+    xrandr; \
   if [ "$SAVE_RPM_OSTREE_CACHE" == "false" ]; then \
     echo "Cleaning the cache..."; \
     rpm-ostree cleanup -m; \
